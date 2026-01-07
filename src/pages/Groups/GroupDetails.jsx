@@ -40,9 +40,7 @@ const GroupDetails = () => {
           </h3>
 
           {requests.length === 0 && (
-            <p className="text-sm text-gray-500">
-              No pending join requests
-            </p>
+            <p className="text-sm text-gray-500">No pending join requests</p>
           )}
 
           {requests.length > 0 && (
@@ -50,6 +48,7 @@ const GroupDetails = () => {
               <table className="w-full border-collapse">
                 <thead>
                   <tr className="bg-[#f8eeee] text-sm text-gray-700">
+                    <th className="p-3 text-left">Name</th>
                     <th className="p-3 text-left">User Email</th>
                     <th className="p-3 text-right">Action</th>
                   </tr>
@@ -61,6 +60,10 @@ const GroupDetails = () => {
                       key={req.id}
                       className="border-b hover:bg-gray-50 transition"
                     >
+                      <td className="p-3 text-sm text-gray-700">
+                        {req.userName}
+                      </td>
+
                       <td className="p-3 text-sm text-gray-700">
                         {req.userEmail}
                       </td>
@@ -99,7 +102,7 @@ const GroupDetails = () => {
 
       {/* ================= YOUR GROUPS ================= */}
       <div className="bg-white border border-[#f0dede] rounded-xl shadow-sm p-5">
-        <h3 className="text-lg font-semibold text-[#7a1d1d] mb-3">
+        <h3 className="text-lg font-semibold text-[#7a1d1d] mb-4">
           Your Groups
         </h3>
 
@@ -110,90 +113,85 @@ const GroupDetails = () => {
         )}
 
         {groups.length > 0 && (
-          <div className="overflow-x-auto">
-            <table className="w-full border-collapse">
-              <thead>
-                <tr className="bg-[#f8eeee] text-sm text-gray-700">
-                  <th className="p-3 text-left">Group Name</th>
-                  <th className="p-3 text-center">Members</th>
-                  <th className="p-3 text-center">Role</th>
-                  <th className="p-3 text-left">Invite</th>
-                </tr>
-              </thead>
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-1">
+            {groups.map((group) => {
+              const isAdmin = group.adminId === user.uid;
+              const inviteLink = `${window.location.origin}/join/${group.inviteCode}`;
 
-              <tbody>
-                {groups.map((group) => {
-                  const isAdmin = group.adminId === user.uid;
-                  const inviteLink = `${window.location.origin}/join/${group.inviteCode}`;
+              return (
+                <div
+                  key={group.id}
+                  className="
+              border border-[#f0dede]
+              rounded-xl
+              p-4
+              hover:shadow-md
+              transition
+              bg-[#fffafa]
+            "
+                >
+                  {/* Group Name */}
+                  <h4
+                    onClick={() => navigate(`/groups/${group.id}`)}
+                    className="
+                text-2xl font-semibold text-[#7a1d1d]
+                cursor-pointer hover:underline
+              "
+                  >
+                    {group.name}
+                  </h4>
 
-                  return (
-                    <tr
-                      key={group.id}
-                      className="border-b hover:bg-gray-50 transition"
+                  {/* Meta info */}
+                  <div className="flex items-center justify-between mt-2 text-md text-gray-600">
+                    <span>👥 {group.members.length} members</span>
+                    <span
+                      className={`font-medium ${
+                        isAdmin ? "text-green-600" : "text-gray-500"
+                      }`}
                     >
-                      {/* Group name */}
-                      <td
-                        className="
-                          p-3 text-sm font-medium
-                          text-[#7a1d1d] cursor-pointer
-                          hover:underline
-                        "
-                        onClick={() => navigate(`/groups/${group.id}`)}
-                      >
-                        {group.name}
-                      </td>
+                      {isAdmin ? "Admin" : "Member"}
+                    </span>
+                  </div>
 
-                      <td className="p-3 text-center text-sm">
-                        {group.members.length}
-                      </td>
+                  {/* Invite section (Admin only) */}
+                  {isAdmin && (
+                    <div className="mt-4">
+                      <label className="text-lg text-gray-500">
+                        Invite Link
+                      </label>
 
-                      <td className="p-3 text-center text-sm">
-                        {isAdmin ? (
-                          <span className="text-green-600 font-medium">
-                            Admin
-                          </span>
-                        ) : (
-                          <span className="text-gray-600">Member</span>
-                        )}
-                      </td>
-
-                      <td className="p-3">
-                        {isAdmin ? (
-                          <div className="flex items-center gap-2">
-                            <input
-                              value={inviteLink}
-                              readOnly
-                              className="
-                                w-full px-2 py-1 text-xs
-                                border rounded-md bg-gray-50
-                              "
-                            />
-                            <button
-                              onClick={() => {
-                                navigator.clipboard.writeText(inviteLink);
-                                alert("Invite link copied ✅");
-                              }}
-                              className="
-                                px-3 py-1 text-xs
-                                rounded-md
-                                border border-[#7a1d1d]
-                                text-[#7a1d1d]
-                                hover:bg-[#7a1d1d] hover:text-white
-                                transition
-                              "
-                            >
-                              Copy
-                            </button>
-                          </div>
-                        ) : (
-                          <span className="text-gray-400 text-sm">—</span>
-                        )}
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
+                      <div className="flex items-center gap-2 mt-1">
+                        <input
+                          value={inviteLink}
+                          readOnly
+                          className="
+                      flex-1 px-2 py-1 text-sm
+                      border rounded-md bg-white
+                    "
+                        />
+                        <button
+                          onClick={() => {
+                            navigator.clipboard.writeText(inviteLink);
+                            alert("Invite link copied ✅");
+                          }}
+                          className="
+                      px-3 py-1 text-md
+                      rounded-md
+                      border border-[#7a1d1d]
+                      text-[#7a1d1d]
+                      hover:bg-[#7a1d1d]
+                      hover:text-white
+                      transition
+                    "
+                        >
+                          Copy
+                        </button>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              );
+            })}
           </div>
         )}
       </div>

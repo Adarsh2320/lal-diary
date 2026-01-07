@@ -29,7 +29,7 @@ const DashboardCards = () => {
   useEffect(() => {
     if (!groups.length) return;
     const groupIds = groups.map((g) => g.id);
-    const unsub = listenToUserGroupExpenses(groupIds, setGroupExpenses);
+    const unsub = listenToUserGroupExpenses(groupIds, user.uid, setGroupExpenses);
     return () => unsub();
   }, [groups]);
 

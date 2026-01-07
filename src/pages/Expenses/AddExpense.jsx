@@ -167,12 +167,7 @@ const AddExpense = () => {
 
       {/* ACTION BUTTONS */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-        <button
-          onClick={() => handleAddTransaction("lend")}
-          className="bg-orange-600 hover:bg-orange-800 text-white py-2 rounded-lg font-medium"
-        >
-          Lend
-        </button>
+        
         <button
           onClick={() => handleAddTransaction("debit")}
           className="bg-red-600 hover:bg-red-800 text-white py-2 rounded-lg font-medium"
@@ -185,6 +180,12 @@ const AddExpense = () => {
           className="bg-green-600 hover:bg-green-800 text-white py-2 rounded-lg font-medium"
         >
           Credit
+        </button>
+        <button
+          onClick={() => handleAddTransaction("lend")}
+          className="bg-orange-600 hover:bg-orange-800 text-white py-2 rounded-lg font-medium"
+        >
+          Lend
         </button>
 
         

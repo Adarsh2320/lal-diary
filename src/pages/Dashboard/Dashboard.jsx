@@ -28,7 +28,7 @@ const Dashboard = () => {
       </div>
 
       {/* MAIN GRID */}
-      <div className="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <div className="max-w-7xl mx-auto grid grid-cols-1  lg:grid-cols-3 gap-6">
         {/* LEFT COLUMN */}
         <div className="lg:col-span-2 space-y-6">
           {/* ADD EXPENSE */}
@@ -59,21 +59,14 @@ const Dashboard = () => {
             <ExpenseList />
           </div>
 
-          {/* MONTHLY BALANCE CHART */}
+          {/* GROUP DETAILS */}
           <div className="bg-red-900 rounded-xl shadow-sm border border-[#f2dada] p-5">
             <div className="p-5">
-              <h2 className="text-3xl font-semibold text-white">
-                Monthly Transaction Overview
-              </h2>
-              <p className="text-sm text-gray-200">
-                Track how your money flows and grows month by month
-              </p>
+              <h2 className="text-3xl font-semibold text-white">Groups</h2>
             </div>
-            <MonthlyBalanceChart />
+            <GroupDetails />
           </div>
-        </div>
-
-        {/* RIGHT COLUMN */}
+           {/* RIGHT COLUMN */}
         <div className="space-y-6">
           {/* CREATE GROUP */}
           <div className="bg-red-900 rounded-xl shadow-sm border border-[#f2dada] p-5">
@@ -88,14 +81,23 @@ const Dashboard = () => {
             <CreateGroup />
           </div>
 
-          {/* GROUP DETAILS */}
+        </div>
+
+          {/* MONTHLY BALANCE CHART */}
           <div className="bg-red-900 rounded-xl shadow-sm border border-[#f2dada] p-5">
             <div className="p-5">
-              <h2 className="text-3xl font-semibold text-white">Groups</h2>
+              <h2 className="text-3xl font-semibold text-white">
+                Monthly Transaction Overview
+              </h2>
+              <p className="text-sm text-gray-200">
+                Track how your money flows and grows month by month
+              </p>
             </div>
-            <GroupDetails />
+            <MonthlyBalanceChart />
           </div>
         </div>
+
+       
       </div>
     </div>
   );

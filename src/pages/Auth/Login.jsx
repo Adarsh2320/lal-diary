@@ -260,7 +260,7 @@ const Login = () => {
         <div>
           <div
             onClick={() => navigate("/")}
-            className="flex items-center gap-3 ml-100 cursor-pointer select-none"
+            className="flex items-center gap-3 ml-10 cursor-pointer select-none"
           >
             <img
               src={logo}

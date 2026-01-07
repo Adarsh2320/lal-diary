@@ -48,10 +48,11 @@ const ExpenseList = () => {
   }, [user]);
 
   useEffect(() => {
-    if (!groups.length) return;
-    const groupIds = groups.map((g) => g.id);
-    return listenToUserGroupExpenses(groupIds, setGroupExpenses);
-  }, [groups]);
+  if (!groups.length || !user) return;
+  const groupIds = groups.map((g) => g.id);
+  return listenToUserGroupExpenses(groupIds, user.uid, setGroupExpenses);
+}, [groups, user]);
+
 
   /* ================= GROUP MAP ================= */
   const groupMap = useMemo(() => {

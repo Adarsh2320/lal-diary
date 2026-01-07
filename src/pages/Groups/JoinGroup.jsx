@@ -1,4 +1,4 @@
-import { useParams, useNavigate, useLocation } from "react-router-dom";
+import { useParams, useNavigate } from "react-router-dom";
 import { useEffect, useState } from "react";
 import {
   requestToJoinGroup,
@@ -8,25 +8,24 @@ import { useAuth } from "../../hooks/useAuth";
 
 const JoinGroup = () => {
   const { inviteCode } = useParams();
-  const { user } = useAuth();
+  const { user, loading: authLoading } = useAuth();
   const navigate = useNavigate();
-  const location = useLocation();
 
   const [group, setGroup] = useState(null);
   const [loading, setLoading] = useState(true);
   const [requested, setRequested] = useState(false);
 
-  /* 🔐 Redirect to login if not authenticated */
+  /* 🔐 Redirect ONLY if auth is finished and user is missing */
   useEffect(() => {
-    if (!user) {
+    if (!authLoading && !user) {
       navigate("/login", {
         replace: true,
-        state: { from: location.pathname },
+        state: { from: `/join/${inviteCode}` },
       });
     }
-  }, [user, navigate, location]);
+  }, [authLoading, user, navigate, inviteCode]);
 
-  /* 📦 Fetch group */
+  /* 📦 Fetch group AFTER login */
   useEffect(() => {
     if (!user) return;
 
@@ -44,12 +43,13 @@ const JoinGroup = () => {
       groupId: group.id,
       userId: user.uid,
       userEmail: user.email,
+      userName: user.displayName,
     });
     setRequested(true);
   };
 
   /* ================= STATES ================= */
-  if (!user || loading) {
+  if (authLoading || loading) {
     return (
       <div className="min-h-screen bg-[#fffafa] flex items-center justify-center">
         <p className="text-gray-500">Loading…</p>
@@ -82,52 +82,41 @@ const JoinGroup = () => {
   return (
     <div className="min-h-screen bg-[#fffafa] flex items-center justify-center px-4">
       <div className="w-full max-w-md bg-white border border-red-900/20 rounded-2xl p-8 shadow-md text-center">
-
-        {/* Header */}
         <h1 className="text-2xl font-bold text-red-900 mb-1">
           Join Group
         </h1>
+
         <p className="text-sm text-gray-500 mb-6">
           You’ve been invited to join
         </p>
 
-        {/* Group info */}
-        <div className="mb-6">
-          <p className="text-lg font-semibold text-gray-800">
-            {group.name}
-          </p>
-        </div>
+        <p className="text-lg font-semibold text-gray-800 mb-6">
+          {group.name}
+        </p>
 
-        {/* Action */}
         {requested ? (
-          <div className="text-green-600 font-medium">
-            Join request sent ⏳
-            <p className="text-sm text-gray-500 mt-1">
-              Waiting for admin approval
-            </p>
-          </div>
+          <>
+             <p className="text-green-600 font-medium">
+               Join request sent ⏳
+             </p>
+             <p className="text-sm text-gray-500 mt-1">
+               Waiting for admin approval
+             </p>
+           </>
         ) : (
           <button
             onClick={handleJoin}
-            className="
-              w-full
-              bg-red-900 text-white
-              py-3 rounded-xl
-              font-medium
-              hover:bg-red-800
-              transition
-            "
+            className="w-full bg-red-900 text-white py-3 rounded-xl font-medium hover:bg-red-800 transition"
           >
             Request to Join
           </button>
         )}
 
-        {/* Back */}
         <button
-          onClick={() => navigate(-1)}
+          onClick={() => navigate("/")}
           className="mt-6 text-sm text-red-900 hover:underline"
         >
-          ← Go Back
+          ← Home
         </button>
       </div>
     </div>

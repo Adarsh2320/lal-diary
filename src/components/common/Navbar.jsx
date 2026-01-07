@@ -1,9 +1,11 @@
 import logo from "../../assets/logo.png";
 import { useNavigate } from "react-router-dom";
 import { logout } from "../../services/auth.service";
+import { useAuth } from "../../hooks/useAuth";
 
 const Navbar = () => {
   const navigate = useNavigate();
+  const { user } = useAuth(); // ✅ auth state
 
   const handleLogout = async () => {
     try {
@@ -18,7 +20,7 @@ const Navbar = () => {
     <nav className="sticky top-0 z-50 bg-gradient-to-r from-red-800 via-red-800 to-red-900 shadow-md">
       <div className="mx-auto max-w-7xl px-6 py-3 flex items-center justify-between">
 
-        {/* Left: Logo + Name (Clickable) */}
+        {/* Left: Logo + App Name */}
         <div
           onClick={() => navigate("/")}
           className="flex items-center gap-3 cursor-pointer select-none"
@@ -33,24 +35,26 @@ const Navbar = () => {
           </span>
         </div>
 
-        {/* Right: Logout */}
-        <button
-          onClick={handleLogout}
-          className="
-            flex items-center gap-2
-            rounded-lg px-4 py-2
-            text-sm font-medium
-            text-red-700
-            bg-white
-            border border-white/20
-            transition-all duration-200
-            hover:bg-white hover:text-red-900
-            hover:shadow-md
-            active:scale-95
-          "
-        >
-          Logout
-        </button>
+        {/* Right: Logout (ONLY IF LOGGED IN) */}
+        {user && (
+          <button
+            onClick={handleLogout}
+            className="
+              flex items-center gap-2
+              rounded-lg px-4 py-2
+              text-sm font-medium
+              text-red-700
+              bg-white
+              border border-white/20
+              transition-all duration-200
+              hover:text-red-900
+              hover:shadow-md
+              active:scale-95
+            "
+          >
+            Logout
+          </button>
+        )}
       </div>
     </nav>
   );

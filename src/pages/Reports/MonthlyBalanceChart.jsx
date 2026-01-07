@@ -15,18 +15,31 @@ import { listenToGroups } from "../../services/group.service";
 import { useAuth } from "../../hooks/useAuth";
 
 /* ---------- helpers ---------- */
-const getMonthKey = (ts) => {
+
+// YYYY-MM-DD
+const getDayKey = (ts) => {
   const d = new Date(ts.seconds * 1000);
-  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
+  return d.toISOString().slice(0, 10);
 };
 
-const formatMonth = (key) => {
-  const [y, m] = key.split("-");
-  return `${m}/${y}`;
+// DD/MM
+const formatDay = (key) => {
+  const [, m, d] = key.split("-");
+  return `${d}/${m}`;
+};
+
+// current month filter
+const isCurrentMonth = (ts) => {
+  const d = new Date(ts.seconds * 1000);
+  const now = new Date();
+  return (
+    d.getMonth() === now.getMonth() &&
+    d.getFullYear() === now.getFullYear()
+  );
 };
 /* ----------------------------- */
 
-const MonthlyTransactionFlowChart = () => {
+const DailyTransactionFlowChart = () => {
   const { user } = useAuth();
 
   const [personal, setPersonal] = useState([]);
@@ -47,25 +60,25 @@ const MonthlyTransactionFlowChart = () => {
   useEffect(() => {
     if (!groups.length) return;
     const groupIds = groups.map((g) => g.id);
-    const unsub = listenToUserGroupExpenses(groupIds, setGroupExpenses);
-    return () => unsub();
+    return listenToUserGroupExpenses(groupIds, user.uid, setGroupExpenses);
   }, [groups]);
 
-  /* ================= MERGE TRANSACTIONS ================= */
+  /* ================= MERGE & FILTER CURRENT MONTH ================= */
   const allTransactions = useMemo(() => {
-    return [...personal, ...groupExpenses].map((t) => ({
-      ...t,
-      transactionType: t.transactionType || "debit",
-    }));
+    return [...personal, ...groupExpenses]
+      .filter((t) => t.createdAt && isCurrentMonth(t.createdAt))
+      .map((t) => ({
+        ...t,
+        transactionType: t.transactionType || "debit",
+      }));
   }, [personal, groupExpenses]);
 
-  /* ================= MONTHLY AGGREGATION + BALANCE ================= */
+  /* ================= DAILY AGGREGATION ================= */
   const chartData = useMemo(() => {
     const map = {};
 
     allTransactions.forEach((t) => {
-      if (!t.createdAt) return;
-      const key = getMonthKey(t.createdAt);
+      const key = getDayKey(t.createdAt);
 
       if (!map[key]) {
         map[key] = { credit: 0, debit: 0, lend: 0 };
@@ -87,7 +100,7 @@ const MonthlyTransactionFlowChart = () => {
         runningBalance += credit - debit - lend;
 
         return {
-          month: formatMonth(key),
+          day: formatDay(key),
           credit,
           debit,
           lend,
@@ -98,18 +111,20 @@ const MonthlyTransactionFlowChart = () => {
 
   return (
     <section className="bg-[#fffafa] rounded-2xl p-6 mt-3">
-
-      {/* CHART CARD */}
       <div className="bg-white rounded-xl border border-[#f0dede] shadow-sm p-4">
+        <h3 className="text-lg font-semibold text-red-900 mb-4">
+          Daily Transaction Flow (This Month)
+        </h3>
+
         {chartData.length === 0 ? (
           <p className="text-sm text-gray-500 text-center py-10">
-            No transaction data available
+            No transactions for this month
           </p>
         ) : (
           <ResponsiveContainer width="100%" height={360}>
             <LineChart data={chartData}>
               <CartesianGrid stroke="#f3eaea" strokeDasharray="4 4" />
-              <XAxis dataKey="month" tick={{ fill: "#6b7280", fontSize: 12 }} />
+              <XAxis dataKey="day" tick={{ fill: "#6b7280", fontSize: 12 }} />
               <YAxis tick={{ fill: "#6b7280", fontSize: 12 }} />
               <Tooltip
                 contentStyle={{
@@ -168,4 +183,4 @@ const MonthlyTransactionFlowChart = () => {
   );
 };
 
-export default MonthlyTransactionFlowChart;
+export default DailyTransactionFlowChart;

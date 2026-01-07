@@ -10,7 +10,6 @@ import {
 import { listenToGroups } from "../../services/group.service";
 import { useAuth } from "../../hooks/useAuth";
 import { useNavigate } from "react-router-dom";
-import DashboardCards from "../Dashboard/DashboardCards";
 
 /* ---------- helpers ---------- */
 const formatDate = (ts) =>
@@ -61,11 +60,20 @@ const Transactions = () => {
   const [labelFilter, setLabelFilter] = useState("all");
   const [transactionFilter, setTransactionFilter] = useState("all");
 
+  // 🆕 NEW FILTER STATES
+  const [fromDate, setFromDate] = useState("");
+  const [toDate, setToDate] = useState("");
+  const [monthFilter, setMonthFilter] = useState("all");
+
   /* ================= LOAD DATA ================= */
   useEffect(() => {
     if (!user) return;
     return listenToUserExpenses(user.uid, setPersonal);
   }, [user]);
+
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, []);
 
   useEffect(() => {
     if (!user) return;
@@ -75,7 +83,7 @@ const Transactions = () => {
   useEffect(() => {
     if (!groups.length) return;
     const groupIds = groups.map((g) => g.id);
-    return listenToUserGroupExpenses(groupIds, setGroupExpenses);
+    return listenToUserGroupExpenses(groupIds,user.uid , setGroupExpenses);
   }, [groups]);
 
   /* ================= GROUP MAP ================= */
@@ -107,13 +115,38 @@ const Transactions = () => {
     );
   }, [personal, groupExpenses, groupMap]);
 
-  /* ================= FILTER ================= */
+  /* ================= AVAILABLE LABELS ================= */
   const availableLabels = useMemo(() => {
     const set = new Set();
     allTransactions.forEach((t) => t.label && set.add(t.label));
     return Array.from(set);
   }, [allTransactions]);
 
+  /* ================= AVAILABLE MONTHS ================= */
+  const availableMonths = useMemo(() => {
+    const set = new Set();
+
+    allTransactions.forEach((t) => {
+      if (!t.createdAt) return;
+      const d = new Date(t.createdAt.seconds * 1000);
+      set.add(`${d.getFullYear()}-${d.getMonth()}`);
+    });
+
+    return Array.from(set)
+      .map((k) => {
+        const [y, m] = k.split("-");
+        return {
+          key: k,
+          label: new Date(y, m).toLocaleString("default", {
+            month: "long",
+            year: "numeric",
+          }),
+        };
+      })
+      .sort((a, b) => b.key.localeCompare(a.key));
+  }, [allTransactions]);
+
+  /* ================= FILTER ================= */
   const filtered = useMemo(() => {
     return allTransactions.filter((t) => {
       if (typeFilter === "personal" && t.isGroup) return false;
@@ -123,17 +156,70 @@ const Transactions = () => {
         t.groupId !== typeFilter
       )
         return false;
+
       if (labelFilter !== "all" && t.label !== labelFilter) return false;
       if (
         transactionFilter !== "all" &&
         t.transactionType !== transactionFilter
       )
         return false;
+
+      // 🆕 MONTH FILTER (highest priority)
+      if (monthFilter !== "all") {
+        const d = new Date(t.createdAt.seconds * 1000);
+        const key = `${d.getFullYear()}-${d.getMonth()}`;
+        if (key !== monthFilter) return false;
+      }
+
+      // 🆕 DATE RANGE FILTER
+      if (fromDate) {
+        const from = new Date(fromDate);
+        const d = new Date(t.createdAt.seconds * 1000);
+        if (d < from) return false;
+      }
+
+      if (toDate) {
+        const to = new Date(toDate);
+        to.setHours(23, 59, 59, 999);
+        const d = new Date(t.createdAt.seconds * 1000);
+        if (d > to) return false;
+      }
+
       if (dateFilter !== "all" && !isInRange(t.createdAt, dateFilter))
         return false;
+
       return true;
     });
-  }, [allTransactions, typeFilter, labelFilter, transactionFilter, dateFilter]);
+  }, [
+    allTransactions,
+    typeFilter,
+    labelFilter,
+    transactionFilter,
+    dateFilter,
+    fromDate,
+    toDate,
+    monthFilter,
+  ]);
+
+  /* ================= TOTAL ================= */
+  const totals = useMemo(() => {
+    let debit = 0;
+    let credit = 0;
+    let lend = 0;
+
+    filtered.forEach((t) => {
+      if (t.transactionType === "debit") debit += t.amount;
+      if (t.transactionType === "credit") credit += t.amount;
+      if (t.transactionType === "lend") lend += t.amount;
+    });
+
+    return {
+      debit,
+      credit,
+      lend,
+      net: credit - debit - lend,
+    };
+  }, [filtered]);
 
   /* ================= DELETE ================= */
   const handleDelete = async (tx) => {
@@ -145,31 +231,22 @@ const Transactions = () => {
     <div className="min-h-screen bg-[#fffafa] px-6 py-6">
       {/* HEADER */}
       <div className="relative flex items-center mb-6">
-        {/* Back button – left */}
         <button
           onClick={() => navigate(-1)}
-          className="
-      text-sm text-red-900
-      border border-red-900
-      rounded-lg px-3 py-1
-      hover:bg-red-50
-      transition
-    "
+          className="text-sm text-red-900 border border-red-900 rounded-lg px-3 py-1 hover:bg-red-50"
         >
           ← Back
         </button>
 
-        {/* Center title */}
         <h1 className="absolute left-1/2 -translate-x-1/2 text-2xl font-bold text-red-900">
           All Transactions
         </h1>
       </div>
 
-      {/* SUMMARY CARDS */}
-      <DashboardCards />
-
       {/* FILTERS */}
+
       <div className="bg-white border-3 border-red-900 rounded-xl p-4 mt-6 flex flex-wrap gap-3">
+        {/* EXISTING FILTERS */}
         {[
           {
             v: typeFilter,
@@ -214,7 +291,7 @@ const Transactions = () => {
             key={i}
             value={f.v}
             onChange={(e) => f.s(e.target.value)}
-            className="border-2 border-red-900 rounded-lg px-2 py-1 text-lg focus:outline-none focus:ring-2 focus:ring-red-800"
+            className="border-2 border-red-900 rounded-lg px-2 py-1 text-lg"
           >
             {f.opts.map(([v, l]) => (
               <option key={v} value={v}>
@@ -223,10 +300,75 @@ const Transactions = () => {
             ))}
           </select>
         ))}
+
+        {/* 🆕 MONTH FILTER */}
+        <select
+          value={monthFilter}
+          onChange={(e) => setMonthFilter(e.target.value)}
+          className="border-2 border-red-900 rounded-lg px-2 py-1 text-lg"
+        >
+          <option value="all">All Months</option>
+          {availableMonths.map((m) => (
+            <option key={m.key} value={m.key}>
+              {m.label}
+            </option>
+          ))}
+        </select>
+      </div>
+      <div className="bg-white border-3 border-red-900 rounded-xl p-3 mt-1  ">
+        {/* 🆕 DATE RANGE */}
+        <p className="text-red-900 text-lg ">From</p>
+
+        <input
+          type="date"
+          value={fromDate}
+          onChange={(e) => setFromDate(e.target.value)}
+          className="border-2 border-red-900 rounded-lg px-2 py-1"
+        />
+
+        <p className="text-red-900 text-lg">To</p>
+        <input
+          type="date"
+          value={toDate}
+          onChange={(e) => setToDate(e.target.value)}
+          className="border-2 border-red-900 rounded-lg px-2 py-1"
+        />
+      </div>
+
+      {/* TOTAL SUMMARY */}
+      <div className="bg-white border border-red-900 rounded-xl p-4 mt-6">
+        <h3 className="text-lg font-semibold text-red-900 mb-3">
+          Total (Based on Applied Filters)
+        </h3>
+
+        <div className="grid grid-cols-1 sm:grid-cols-4 gap-4 text-center">
+          <div className="bg-red-50 rounded-lg p-3">
+            <p>Total Debit</p>
+            <p className="font-bold text-red-700">₹{totals.debit}</p>
+          </div>
+          <div className="bg-green-50 rounded-lg p-3">
+            <p>Total Credit</p>
+            <p className="font-bold text-green-700">₹{totals.credit}</p>
+          </div>
+          <div className="bg-orange-50 rounded-lg p-3">
+            <p>Total Lend</p>
+            <p className="font-bold text-orange-600">₹{totals.lend}</p>
+          </div>
+          <div className="bg-gray-100 rounded-lg p-3">
+            <p>Net</p>
+            <p
+              className={`font-bold ${
+                totals.net >= 0 ? "text-green-700" : "text-red-700"
+              }`}
+            >
+              {totals.net >= 0 ? "+" : "−"} ₹{Math.abs(totals.net)}
+            </p>
+          </div>
+        </div>
       </div>
 
       {/* TABLE */}
-      <div className="bg-white border border-red-900/20 rounded-xl shadow-sm mt-6 overflow-x-auto">
+      <div className="bg-white border rounded-xl shadow-sm mt-6 overflow-x-auto">
         <table className="w-full text-sm">
           <thead className="bg-red-900 text-white">
             <tr>
