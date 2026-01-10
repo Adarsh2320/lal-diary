@@ -95,7 +95,6 @@ const AddExpense = () => {
 
   return (
     <div className="bg-[#fffafa] rounded-xl shadow-md p-6 space-y-6 mt-2">
-
       {/* AMOUNT */}
       <div>
         <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -110,8 +109,39 @@ const AddExpense = () => {
         />
       </div>
 
+      {/* NOTE */}
+      <div>
+        <label className="block text-sm font-medium text-gray-700 mb-1">
+          Note (optional)
+        </label>
+        <input
+          placeholder="Add a note"
+          value={note}
+          onChange={(e) => setNote(e.target.value)}
+          className="w-full border rounded-lg px-4 py-2"
+        />
+      </div>
+
       {/* GROUP + LABEL */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        {/* LABEL */}
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-1">
+            Label (optional)
+          </label>
+          <select
+            value={label}
+            onChange={(e) => setLabel(e.target.value)}
+            className="w-full border rounded-lg px-3 py-2"
+          >
+            <option value="">Select label</option>
+            {labels.map((l) => (
+              <option key={l.id} value={l.name}>
+                {l.name}
+              </option>
+            ))}
+          </select>
+        </div>
 
         {/* GROUP */}
         <div>
@@ -131,43 +161,10 @@ const AddExpense = () => {
             ))}
           </select>
         </div>
-
-        {/* LABEL */}
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">
-            Label (optional)
-          </label>
-          <select
-            value={label}
-            onChange={(e) => setLabel(e.target.value)}
-            className="w-full border rounded-lg px-3 py-2"
-          >
-            <option value="">Select label</option>
-            {labels.map((l) => (
-              <option key={l.id} value={l.name}>
-                {l.name}
-              </option>
-            ))}
-          </select>
-        </div>
-      </div>
-
-      {/* NOTE */}
-      <div>
-        <label className="block text-sm font-medium text-gray-700 mb-1">
-          Note (optional)
-        </label>
-        <input
-          placeholder="Add a note"
-          value={note}
-          onChange={(e) => setNote(e.target.value)}
-          className="w-full border rounded-lg px-4 py-2"
-        />
       </div>
 
       {/* ACTION BUTTONS */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-        
         <button
           onClick={() => handleAddTransaction("debit")}
           className="bg-red-600 hover:bg-red-800 text-white py-2 rounded-lg font-medium"
@@ -187,41 +184,72 @@ const AddExpense = () => {
         >
           Lend
         </button>
-
-        
       </div>
 
       {/* LABEL MANAGEMENT */}
       <div className="border-t pt-4">
-        <h3 className="text-sm font-semibold text-gray-700 mb-2">
+        <h3 className="text-sm font-semibold text-gray-700 mb-3">
           Manage Labels
         </h3>
 
-        <div className="flex gap-2 mb-3">
+        {/* INPUT + BUTTON */}
+        <div className="flex flex-col sm:flex-row gap-2 mb-4">
           <input
             placeholder="New label"
             value={newLabel}
             onChange={(e) => setNewLabel(e.target.value)}
-            className="flex-1 border rounded-lg px-3 py-2"
+            className="
+        flex-1
+        border rounded-lg
+        px-3 py-2
+        text-sm
+        focus:outline-none focus:ring-2 focus:ring-[#7a1d1d]
+      "
           />
           <button
             onClick={handleAddLabel}
-            className="bg-[#7a1d1d] text-white px-4 rounded-lg"
+            className="
+        bg-[#7a1d1d] text-white
+        px-4 py-2
+        rounded-lg
+        text-sm font-medium
+        hover:bg-[#661818]
+        transition
+        w-full sm:w-auto
+      "
           >
             Add
           </button>
         </div>
 
+        {/* LABEL LIST */}
         <div className="flex flex-wrap gap-2">
           {labels.map((l) => (
             <span
               key={l.id}
-              className="bg-gray-100 px-3 py-1 rounded-full text-sm flex items-center gap-2"
+              className="
+          bg-gray-100
+          px-3 py-1.5
+          rounded-full
+          text-sm
+          flex items-center gap-2
+          max-w-full
+        "
             >
-              {l.name}
+              <span className="truncate max-w-[120px] sm:max-w-[200px]">
+                {l.name}
+              </span>
+
               <button
                 onClick={() => handleDeleteLabel(l.id)}
-                className="text-red-500 hover:text-red-700"
+                className="
+            text-red-500
+            hover:text-red-700
+            font-bold
+            text-base
+            leading-none
+          "
+                aria-label="Delete label"
               >
                 ×
               </button>

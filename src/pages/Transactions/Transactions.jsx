@@ -5,6 +5,7 @@ import {
 } from "../../services/expense.service";
 import {
   listenToUserGroupExpenses,
+  listenToGroupExpenses,
   deleteGroupExpense,
 } from "../../services/groupExpense.service";
 import { listenToGroups } from "../../services/group.service";
@@ -81,10 +82,24 @@ const Transactions = () => {
   }, [user]);
 
   useEffect(() => {
+  if (!groups.length) return;
+
+  // 🔥 silently warm Firestore cache
+  const unsubs = groups.map((g) =>
+    listenToGroupExpenses(g.id, () => {})
+  );
+
+  return () => {
+    unsubs.forEach((u) => u && u());
+  };
+}, [groups]);
+
+
+  useEffect(() => {
     if (!groups.length) return;
     const groupIds = groups.map((g) => g.id);
     return listenToUserGroupExpenses(groupIds,user.uid , setGroupExpenses);
-  }, [groups]);
+  }, [groups, user.uid]);
 
   /* ================= GROUP MAP ================= */
   const groupMap = useMemo(() => {

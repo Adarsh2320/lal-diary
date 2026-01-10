@@ -101,8 +101,8 @@ const GroupDetails = () => {
       )}
 
       {/* ================= YOUR GROUPS ================= */}
-      <div className="bg-white border border-[#f0dede] rounded-xl shadow-sm p-5">
-        <h3 className="text-lg font-semibold text-[#7a1d1d] mb-4">
+      <div className="bg-white border border-[#f0dede] rounded-xl shadow-sm p-4 sm:p-5">
+        <h3 className="text-lg sm:text-xl font-semibold text-[#7a1d1d] mb-4">
           Your Groups
         </h3>
 
@@ -125,27 +125,26 @@ const GroupDetails = () => {
               border border-[#f0dede]
               rounded-xl
               p-4
+              bg-[#fffafa]
               hover:shadow-md
               transition
-              bg-[#fffafa]
             "
                 >
-                  {/* Group Name */}
-                  <h4
-                    onClick={() => navigate(`/groups/${group.id}`)}
-                    className="
-                text-2xl font-semibold text-[#7a1d1d]
-                cursor-pointer hover:underline
-              "
-                  >
-                    {group.name}
-                  </h4>
+                  {/* GROUP HEADER */}
+                  <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+                    <h4
+                      onClick={() => navigate(`/groups/${group.id}`)}
+                      className="
+                  text-lg sm:text-xl font-semibold text-[#7a1d1d]
+                  cursor-pointer hover:underline
+                  truncate
+                "
+                    >
+                      {group.name}
+                    </h4>
 
-                  {/* Meta info */}
-                  <div className="flex items-center justify-between mt-2 text-md text-gray-600">
-                    <span>👥 {group.members.length} members</span>
                     <span
-                      className={`font-medium ${
+                      className={`text-sm font-medium ${
                         isAdmin ? "text-green-600" : "text-gray-500"
                       }`}
                     >
@@ -153,35 +152,44 @@ const GroupDetails = () => {
                     </span>
                   </div>
 
-                  {/* Invite section (Admin only) */}
+                  {/* META */}
+                  <div className="flex items-center gap-4 mt-2 text-sm text-gray-600">
+                    <span>👥 {group.members.length} members</span>
+                  </div>
+
+                  {/* INVITE SECTION (ADMIN ONLY) */}
                   {isAdmin && (
                     <div className="mt-4">
-                      <label className="text-lg text-gray-500">
+                      <label className="block text-sm text-gray-500 mb-1">
                         Invite Link
                       </label>
 
-                      <div className="flex items-center gap-2 mt-1">
+                      <div className="flex flex-col sm:flex-row gap-2">
                         <input
                           value={inviteLink}
                           readOnly
                           className="
-                      flex-1 px-2 py-1 text-sm
+                      flex-1 px-3 py-2 text-sm
                       border rounded-md bg-white
+                      truncate
                     "
                         />
+
                         <button
                           onClick={() => {
                             navigator.clipboard.writeText(inviteLink);
                             alert("Invite link copied ✅");
                           }}
                           className="
-                      px-3 py-1 text-md
+                      px-4 py-2
+                      text-sm font-medium
                       rounded-md
                       border border-[#7a1d1d]
                       text-[#7a1d1d]
                       hover:bg-[#7a1d1d]
                       hover:text-white
                       transition
+                      w-full sm:w-auto
                     "
                         >
                           Copy

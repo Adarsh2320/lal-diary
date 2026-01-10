@@ -5,6 +5,7 @@ import {
 } from "../../services/expense.service";
 import {
   listenToUserGroupExpenses,
+  listenToGroupExpenses,
   deleteGroupExpense,
 } from "../../services/groupExpense.service";
 import { listenToGroups } from "../../services/group.service";
@@ -48,9 +49,36 @@ const ExpenseList = () => {
   }, [user]);
 
   useEffect(() => {
+    if (!groups.length) return;
+
+    // 🔥 silently warm Firestore cache
+    const unsubs = groups.map((g) => listenToGroupExpenses(g.id, () => {}));
+
+    return () => {
+      unsubs.forEach((u) => u && u());
+    };
+  }, [groups]);
+
+  useEffect(() => {
+    if (!groups.length || !user) return;
+    const groupIds = groups.map((g) => g.id);
+    return listenToUserGroupExpenses(groupIds, user.uid, setGroupExpenses);
+  }, [groups, user]);
+
+  useEffect(() => {
   if (!groups.length || !user) return;
-  const groupIds = groups.map((g) => g.id);
-  return listenToUserGroupExpenses(groupIds, user.uid, setGroupExpenses);
+
+  const unsubs = groups.map(group =>
+    listenToGroupExpenses(group.id, expenses => {
+      setGroupExpenses(prev => {
+        const others = prev.filter(e => e.groupId !== group.id);
+        const mine = expenses.filter(e => e.paidBy === user.uid);
+        return [...others, ...mine];
+      });
+    })
+  );
+
+  return () => unsubs.forEach(u => u && u());
 }, [groups, user]);
 
 
@@ -77,9 +105,13 @@ const ExpenseList = () => {
       label: e.label || "Group Expense",
       transactionType: e.transactionType || "debit",
     }));
+    const getTime = (e) =>
+      e.createdAt?.seconds
+        ? e.createdAt.seconds * 1000
+        : e.clientCreatedAt || 0;
 
     return [...personal, ...group]
-      .sort((a, b) => (b.createdAt?.seconds || 0) - (a.createdAt?.seconds || 0))
+      .sort((a, b) => getTime(b) - getTime(a))
       .slice(0, 5);
   }, [personalExpenses, groupExpenses, groupMap]);
 
@@ -93,11 +125,8 @@ const ExpenseList = () => {
 
   return (
     <div className="bg-[#fffafa] rounded-2xl shadow-sm border border-[#f0dede] mt-2 p-6">
-
       {/* HEADER */}
       <div className="flex justify-between items-center mb-5">
-        
-
         <button
           onClick={() => navigate("/transactions")}
           className="
@@ -153,13 +182,13 @@ const ExpenseList = () => {
                       {exp.typeLabel}
                     </td>
 
-                    <td className={`p-3 font-semibold uppercase ${txStyle[type]}`}>
+                    <td
+                      className={`p-3 font-semibold uppercase ${txStyle[type]}`}
+                    >
                       {type}
                     </td>
 
-                    <td className="p-3 text-sm">
-                      {exp.label || "-"}
-                    </td>
+                    <td className="p-3 text-sm">{exp.label || "-"}</td>
 
                     <td className="p-3 text-sm text-gray-600">
                       {exp.note || "-"}

@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { listenToUserExpenses } from "../../services/expense.service";
-import { listenToUserGroupExpenses } from "../../services/groupExpense.service";
+import { listenToUserGroupExpenses,listenToGroupExpenses, } from "../../services/groupExpense.service";
 import { listenToGroups } from "../../services/group.service";
 import { useAuth } from "../../hooks/useAuth";
 
@@ -25,13 +25,43 @@ const DashboardCards = () => {
     return () => unsub();
   }, [user]);
 
+  useEffect(() => {
+  if (!groups.length) return;
+
+  // 🔥 silently warm Firestore cache
+  const unsubs = groups.map((g) =>
+    listenToGroupExpenses(g.id, () => {})
+  );
+
+  return () => {
+    unsubs.forEach((u) => u && u());
+  };
+}, [groups]);
+
   /* ================= LOAD GROUP EXPENSES ================= */
   useEffect(() => {
     if (!groups.length) return;
     const groupIds = groups.map((g) => g.id);
     const unsub = listenToUserGroupExpenses(groupIds, user.uid, setGroupExpenses);
     return () => unsub();
-  }, [groups]);
+  }, [groups, user.uid]);
+
+  useEffect(() => {
+  if (!groups.length || !user) return;
+
+  const unsubs = groups.map(group =>
+    listenToGroupExpenses(group.id, expenses => {
+      setGroupExpenses(prev => {
+        const others = prev.filter(e => e.groupId !== group.id);
+        const mine = expenses.filter(e => e.paidBy === user.uid);
+        return [...others, ...mine];
+      });
+    })
+  );
+
+  return () => unsubs.forEach(u => u && u());
+}, [groups, user]);
+
 
   /* ================= NORMALIZE ALL TRANSACTIONS ================= */
   const allTransactions = useMemo(() => {

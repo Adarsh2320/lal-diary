@@ -82,6 +82,7 @@ export const addGroupExpense = async ({
       note,
       transactionType,
       createdAt: serverTimestamp(),
+       clientCreatedAt: Date.now(), // for offline sorting
     }
   );
 
@@ -95,6 +96,7 @@ export const addGroupExpense = async ({
       groupExpenseId: groupExpenseRef.id,
       amount,
       note,
+      transactionType,
       type: "GROUP",
       createdAt: serverTimestamp(),
     }
@@ -135,7 +137,7 @@ export const listenToGroupExpenses = (groupId, callback) => {
   );
 
   return onSnapshot(
-    q,
+    q,{ includeMetadataChanges: true },
     (snapshot) => {
       const expenses = snapshot.docs.map((docSnap) => {
         const data = docSnap.data();
@@ -228,7 +230,7 @@ export const listenToUserGroupExpenses = (
     orderBy("createdAt", "desc")
   );
 
-  return onSnapshot(q, (snapshot) => {
+  return onSnapshot(q, { includeMetadataChanges: true }, (snapshot) => {
     const data = snapshot.docs.map(docSnap => ({
       id: docSnap.id,
       ...docSnap.data(),
